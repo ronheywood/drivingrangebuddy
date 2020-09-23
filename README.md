@@ -1,8 +1,10 @@
 # Driving Range Buddy
 
-This app will generate a random distance to hit to, and allow you to log your misses left write front and back.
+This app will generate a random distance to hit to, and allow you to log your misses Left Right Front and Back.
 
-When you record your miss, and your chosen club the app will collate these statistics to help you visualise your dispersion with each club
+When you record your miss, and your chosen club the app will collate these statistics to help you visualise your dispersion with each club.
+
+http://drivingrangebuddy.ronheywood.co.uk
 
 ## Attribution:
 
