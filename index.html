@@ -8,7 +8,7 @@
     <title>Driving Range Buddy</title>
 
     <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -20,54 +20,33 @@
     <link href='css/app.css' rel='stylesheet'>
   </head>
   <body>
-
     
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">Driving Range Buddy</a>
-          </div>
-          <div id="navbar" class="collapse navbar-collapse">
-            <ul class="nav navbar-nav">
-              <li class="active"><a href="#">Home</a></li>
-              <li><a href="#">About</a></li>
-              <li><a href="#">Contact</a></li>
-            </ul>
-          </div><!--/.nav-collapse -->
-        </div>
-      </nav>
-  
-      <div class="container">
+    <main role="main" class="container">
         <div class="starter-template">
             <h1 class="callToAction white">Pick a target and hit to this distance:</h1>
-            <section id="instructions" class="row">
-                <div class="col6">
+            <section id="instructions" class="row align-items-center">
+                <div class="col">
                     <h2 class="targetDistanceHeadline">Target Distance</h2>
                     <h3><span class="targetDistance white" data-bind="targetDistance"></span> Yards</32>
                 </div>
-                <button class="btn btn-primary" data-role="makeNewRandomDistance">Pick a new distance</button>
+                <div class="col align-self-center">
+                  <button class="btn btn-block btn-primary" data-role="makeNewRandomDistance">Pick a new distance</button>
+                </div>
             </section>
         </div>
 
-        <div class="performanceCanvas row">
-          <p class="targetDistanceHeadline white center">Tap to show where the shot ended up.</p>
-          <article class="col12 targetCanvas" data-role="performanceCanvas">
+        <p class="targetDistanceHeadline white center">Tap to show where the shot ended up.</p>
+        <div class="performanceCanvas row ">
+          <article class="col targetCanvas align-self-start" data-role="performanceCanvas">
             <img src="img/golf-field.svg" width="50%" />
           </article>
         </div>
   
-      </div><!-- /.container -->
+    </main><!-- /.container -->
     <
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->    
+    <script src="./js/jquery.slim.min.js"crossorigin="anonymous"></script>
+    <script src="./js/bootstrap.bundle.min.js" crossorigin="anonymous"></script> 
     <script>
         var options = {
             minimumDistance: 30,
@@ -94,11 +73,47 @@
         }
 
         function makeRandomDistance(){
-            $('[data-bind=targetDistance]').text(randomIntFromInterval(options.minimumDistance,options.maximumDistance));
+           $('[data-role=shotRecord]').remove();
+           $('[data-bind=targetDistance]').text(randomIntFromInterval(options.minimumDistance,options.maximumDistance));
         }
 
         var handleClick = function(e){
-          console.log('click',e.offsetX,e.offsetY,e.pageX,e.pageY);
+          recordDispersion(this,e);
+        }
+
+        var recordDispersion = function(elem,e){
+          
+          var offset = elem.getClientRects()[0];
+          var canvasX = e.clientX - offset.left;
+          var canvasY = e.clientY - offset.top;
+
+          var shotRecord = $("<span class=\"badge badge-warning shotRecord center\" data-role=\"shotRecord\" />");
+          shotRecord.css({'position':'absolute','left': canvasX,'top': canvasY});
+          $(elem).append(shotRecord);
+          
+          //get the xy of the middle of the container - (the target)
+          
+          var x = $(elem).width() /2;
+          var y = $(elem).height() /2;
+          
+          //record dispersion miss left where x < container middle x
+          if(canvasX<=x){ 
+            shotRecord.text(shotRecord.text() + " Left");
+          }
+          //record dispersion miss right when x > container.middle.x
+          if(canvasX>x){
+             shotRecord.text(shotRecord.text() + " Right");
+          }
+
+          //record dispersion miss long when y < container.middle.y
+          if(canvasY<=y){
+            shotRecord.text(shotRecord.text() + " Long");
+          }
+
+          //record dispersion miss short when y > container.middle.y
+          if(canvasY>y){
+            shotRecord.text(shotRecord.text() + " Short");
+          }
         }
 
         var handleEnd = function(e){
