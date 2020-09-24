@@ -35,6 +35,11 @@
             </section>
         </div>
 
+        <p class="clubSelectionHeadline white center">Select a Club</p>
+        <div class="clubSelectionContainer row" data-bind="club-selection">
+          
+        </div>
+
         <p class="targetDistanceHeadline white center">Tap to show where the shot ended up.</p>
         <div class="performanceCanvas row ">
           <article class="col targetCanvas align-self-start" data-role="performanceCanvas">
@@ -51,5 +56,23 @@
     <script src="./js/dispersion-recorder.js" crossorigin="anonymous"></script>
     <script src="./js/configuration.js" crossorigin="anonymous"></script>
     <script src="./js/app.js" crossorigin="anonymous"></script>
+    <script>
+      var clubList = $('[data-bind="club-selection"]');
+      var unorderedList = $('<div class="clubList">');
+      console.log(unorderedList);
+      options.clubs.map(function(club){
+        unorderedList.append($('<button class="btn btn-secondary">'+club+'</button>'));
+      });
+      
+      clubList.append(unorderedList);
+
+      clubList.on('click','button',function(){
+        $(window).trigger('club-selection:changed',{club: this.innerHTML});
+      })
+
+      $(window).on('club-selection:changed',function(event,args){
+        console.log('Received event set club to: '+args.club);
+      });
+    </script>
   </body>
 </html>

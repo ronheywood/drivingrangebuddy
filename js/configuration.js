@@ -2,7 +2,7 @@ var options = {
     minimumDistance: 30,
     maximumDistance: 230,
     clubs: [
-        "Driver",
+        "1W",
         "3W",
         "4W",
         "3H",
