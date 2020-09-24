@@ -52,27 +52,11 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->    
     <script src="./js/jquery.slim.min.js"crossorigin="anonymous"></script>
     <script src="./js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-    <script src="./js/jquery.randomDistance.js" crossorigin="anonymous"></script>
-    <script src="./js/dispersion-recorder.js" crossorigin="anonymous"></script>
+    <!-- app resources -->
     <script src="./js/configuration.js" crossorigin="anonymous"></script>
-    <script src="./js/app.js" crossorigin="anonymous"></script>
-    <script>
-      var clubList = $('[data-bind="club-selection"]');
-      var unorderedList = $('<div class="clubList">');
-      console.log(unorderedList);
-      options.clubs.map(function(club){
-        unorderedList.append($('<button class="btn btn-secondary">'+club+'</button>'));
-      });
-      
-      clubList.append(unorderedList);
-
-      clubList.on('click','button',function(){
-        $(window).trigger('club-selection:changed',{club: this.innerHTML});
-      })
-
-      $(window).on('club-selection:changed',function(event,args){
-        console.log('Received event set club to: '+args.club);
-      });
-    </script>
+    <script src="./js/jquery.randomDistance.js" crossorigin="anonymous"></script>
+    <script src="./js/jquery.dispersion-recorder.js" crossorigin="anonymous"></script>
+    <script src="./js/clublist.js" crossorigin="anonymous"></script>
+    <script src="./js/app.js" crossorigin="anonymous"></script>    
   </body>
 </html>
