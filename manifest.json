@@ -315,6 +315,12 @@
             "sizes": "48x48"
         },
         {
+            "src": "icons/android/maskable_icon.png",
+            "sizes": "196x196",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
             "src": "icons/chrome/chrome-extensionmanagementpage-48-48.png",
             "sizes": "48x48"
         },
