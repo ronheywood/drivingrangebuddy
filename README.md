@@ -4,7 +4,7 @@ This app will generate a random distance to hit to, and allow you to log your mi
 
 When you record your miss, and your chosen club the app will collate these statistics to help you visualise your dispersion with each club.
 
-http://drivingrangebuddy.ronheywood.co.uk
+https://ronheywood.github.io/drivingrangebuddy/
 
 ## Attribution:
 
