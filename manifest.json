@@ -364,7 +364,7 @@
         }
     ],
     "lang": "en-GB",
-    "start_url": "/index.html",
+    "start_url": "index.html",
     "display": "standalone",
     "background_color": "black",
     "theme_color": "black"
