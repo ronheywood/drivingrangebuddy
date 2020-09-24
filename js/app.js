@@ -1,5 +1,10 @@
 $(function(){
-    
+
+    if ('serviceWorker' in navigator) {     
+        navigator.serviceWorker  
+        .register('./serviceWorker.js'); 
+    } 
+
     $('[data-role=performanceCanvas]').dispersionRecord();
     $('[data-bind="club-selection"]').clubList(options);
     
