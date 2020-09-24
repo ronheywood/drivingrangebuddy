@@ -24,13 +24,17 @@
         }
 
         var setClubList = function () {
-            var container = $('<div class="clubList">');
+            var container = $('<ul class="pagination justify-content-center flex-wrap pagination-sm clubList">');
             clubs.map(function (club) {
-                container.append($('<button class="btn btn-secondary">' + club + '</button>'));
+                container.append($('<li class="page-item"><a class="page-link">' + club + '</a></li>'));
             });
 
-            container.on('click', 'button', function(){ sendChangeClubCommand(this.innerHTML) });
-            $element.empty().append(container);
+            container.on('click', 'a', function(){
+                container.find('li').removeClass('active');
+                $(this).parent('li').addClass('active'); 
+                sendChangeClubCommand(this.innerHTML); return false; 
+            });
+            $element.empty().append('<nav>').append(container);
         }
 
         plugin.init = function () {
