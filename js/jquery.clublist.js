@@ -24,7 +24,7 @@
         }
 
         var setClubList = function () {
-            var container = $('<ul class="pagination justify-content-center flex-wrap pagination-sm clubList">');
+            var container = $('<ul class="pagination justify-content-center flex-wrap clubList">');
             clubs.map(function (club) {
                 container.append($('<li class="page-item"><a class="page-link">' + club + '</a></li>'));
             });
