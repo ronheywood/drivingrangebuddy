@@ -1,12 +1,16 @@
 (function ($) {
   $.fn.dispersionRecord = function (options) {
-    var options = options || { minimumDistance: 30, maximumDistance: 230 }
+    var defaultOptions = { minimumDistance: 30, maximumDistance: 230, template: "<span class=\"badge badge-warning shotRecord center\" data-role=\"shotRecord\">{club} Miss {vector} {length} {targetDistance} yd</span>" };
+    var options = options || defaultOptions;
+    Object.assign(defaultOptions,options);
+
     var plugin = this;
     var chosenClub = '';
+    var targetDistance = null;
     var element, $element;
 
     var makeShotRecord = function (left, top) {
-      var shotRecord = $("<span class=\"badge badge-warning shotRecord center\" data-role=\"shotRecord\" />");
+      var shotRecord = $(options.template);
       shotRecord.css({ 'position': 'absolute', 'left': left, 'top': top });
       return shotRecord;
     }
@@ -16,27 +20,17 @@
       var x = $element.width() / 2;
       var y = $element.height() / 2;
       
-      shotRecord.text( shotRecord.text() + chosenClub);
+      var result = { vector: '', length: '', targetDistance: targetDistance, chosenClub: chosenClub }
+      
+      result.vector =  (canvasX <= x) ? 'Left' : 'Right';
+      result.length =  (canvasY <= y) ? 'Long' : 'Short';
 
-      //record dispersion miss left where x < container middle x
-      if (canvasX <= x) {
-        shotRecord.text(shotRecord.text() + " Left");
-      }
-      //record dispersion miss right when x > container.middle.x
-      if (canvasX > x) {
-        shotRecord.text(shotRecord.text() + " Right");
-      }
+      var compiled = shotRecord.text().replace('{vector}',result.vector)
+      .replace('{length}',result.length)
+      .replace('{club}',result.chosenClub)
+      .replace('{targetDistance}',result.targetDistance);
 
-      //record dispersion miss long when y < container.middle.y
-      if (canvasY <= y) {
-        shotRecord.text(shotRecord.text() + " Long");
-      }
-
-      //record dispersion miss short when y > container.middle.y
-      if (canvasY > y) {
-        shotRecord.text(shotRecord.text() + " Short");
-      }
-
+      shotRecord.text(compiled);
     }
 
     function placeShortRecordOnCanvas(canvasX, canvasY) {
@@ -103,6 +97,10 @@
       bindPerformanceCanvasEventListeners();
       
       $(window).on('club-selection:changed',function(event,args){ plugin.setChosenClub(args.club)});
+      $(window).on('Distance:set',function(event,args){
+        $('[data-role=shotRecord]').remove();
+        targetDistance = args.distance;
+      });
     }
 
     plugin.init();

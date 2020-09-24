@@ -10,8 +10,9 @@
         }
 
         plugin.resetDistance = function(){
-            $('[data-role=shotRecord]').remove();
-            $element.text(randomIntFromInterval(options.minimumDistance,options.maximumDistance));
+            var distance = randomIntFromInterval(options.minimumDistance,options.maximumDistance);
+            $element.text(distance);
+            $(window).trigger('Distance:set',{distance:distance});
             return $element;
         }
         
