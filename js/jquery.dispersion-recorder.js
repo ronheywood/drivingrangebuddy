@@ -24,12 +24,12 @@
       
       result.vector =  (canvasX <= x) ? 'Left' : 'Right';
       result.length =  (canvasY <= y) ? 'Long' : 'Short';
-
+      
       var compiled = shotRecord.text().replace('{vector}',result.vector)
       .replace('{length}',result.length)
       .replace('{club}',result.chosenClub)
       .replace('{targetDistance}',result.targetDistance);
-
+      
       shotRecord.text(compiled);
     }
 
@@ -45,7 +45,7 @@
       var offset = element.getClientRects()[0];
       var canvasX = e.clientX - offset.left;
       var canvasY = e.clientY - offset.top;
-
+      
       placeShortRecordOnCanvas(canvasX, canvasY);
     }
 
@@ -98,7 +98,7 @@
       
       $(window).on('club-selection:changed',function(event,args){ plugin.setChosenClub(args.club)});
       $(window).on('Distance:set',function(event,args){
-        $('[data-role=shotRecord]').remove();
+        $element.find('[data-role=shotRecord]').remove();
         targetDistance = args.distance;
       });
     }
