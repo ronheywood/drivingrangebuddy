@@ -1,6 +1,3 @@
-//const sum = require('../js/randomDistance');
-const mockMath = Object.create(global.Math);
-
 require('../js/jquery.randomDistance.js');
  const cases = [[30, 230, 139], [90, 200, 150], [100, 400, 264]];
 
