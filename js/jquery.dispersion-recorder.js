@@ -35,8 +35,7 @@ var shotRecordMapper = {
       return label;
     }
 
-    function placeShortRecordOnCanvas(canvasX, canvasY) {
-      var shotData = getShotData(canvasX, canvasY);
+    function placeShortRecordOnCanvas(shotData) {
       $element.append(createLabelElement(shotData));
     }
 
@@ -45,11 +44,11 @@ var shotRecordMapper = {
       var canvasX = e.clientX - offset.left;
       var canvasY = e.clientY - offset.top;
 
-      placeShortRecordOnCanvas(canvasX, canvasY);
+      var shotData = getShotData(canvasX, canvasY);
+      placeShortRecordOnCanvas(shotData);
     }
 
     var handleEnd = function (e) {
-      console.log('Touch end');
       if (lastMove && lastMove.originalEvent.touches[0] !== undefined) {
         console.log(lastMove.originalEvent);
         var e = lastMove.originalEvent.touches[0];
@@ -57,7 +56,9 @@ var shotRecordMapper = {
         var offset = element.getClientRects()[0];
         var canvasX = e.clientX - offset.left;
         var canvasY = e.clientY - offset.top;
-        placeShortRecordOnCanvas(canvasX, canvasY);
+
+        var shotData = getShotData(canvasX, canvasY);
+        placeShortRecordOnCanvas(shotData);
       }
     };
 
