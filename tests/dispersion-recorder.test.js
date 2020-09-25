@@ -1,5 +1,3 @@
-const { TestScheduler } = require('jest');
-
 require('../js/jquery.dispersion-recorder.js');
 
 var sut, plugin;
