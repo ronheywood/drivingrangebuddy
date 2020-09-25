@@ -91,7 +91,7 @@ var shotRecordMapper = {
       $element.on("touchmove", handleMove);
     }
 
-    var bindPerformanceCanvasEventListeners = function () {
+    var bindApplicationEventListeners = function () {
       $(window).on('club-selection:changed', function (event, args) { plugin.setChosenClub(args.club) });
       $(window).on('Distance:set', function (event, args) {
         $element.find('[data-role=shotRecord]').remove();
@@ -111,7 +111,7 @@ var shotRecordMapper = {
 
       preventDragSelectOnImage();
       bindUserTouchHandlers();
-      bindPerformanceCanvasEventListeners();
+      bindApplicationEventListeners();
 
     }
 
