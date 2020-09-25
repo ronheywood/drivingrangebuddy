@@ -1,0 +1,33 @@
+{
+  "name": "DrivingRangeBuddy",
+  "version": "1.0.0",
+  "description": "This app will generate a random distance to hit to, and allow you to log your misses Left Right Front and Back.",
+  "main": "serviceWorker.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "jest": "^26.4.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "setupFiles": ["./tests/setup-jest.js"]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ronheywood/drivingrangebuddy.git"
+  },
+  "keywords": [
+    "golfing",
+    "PWA"
+  ],
+  "author": "Ron Heywood",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ronheywood/drivingrangebuddy/issues"
+  },
+  "homepage": "https://ronheywood.github.io/drivingrangebuddy/index.html"
+}
