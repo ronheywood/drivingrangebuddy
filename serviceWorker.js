@@ -6,6 +6,7 @@ var filesToCache = [
     '/css/bootstrap.min.css.map',
     '/css/app.css',
     '/img/golf-field.svg',
+    '/js/configuration.js',
     '/js/app.js',
     '/js/bootstrap.bundle.min.js',
     '/js/bootstrap.bundle.min.js.map',
