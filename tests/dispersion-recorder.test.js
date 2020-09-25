@@ -23,14 +23,28 @@ describe("When clicking on the canvas", () => {
     sut.trigger(e);
     test("should add an icon to the canvas", () => {
         expect(sut.find('span').length).toBe(1);
-    })
+    });
 
     test("should position the icon based on where the user clicks", () => {
         var element = sut.find('span');
         expect(element.css('position')).toBe('absolute');
         expect(element.css('left')).toBe("10px");
         expect(element.css('top')).toBe("10px");
-    })
+    });
+
+    test("should dispatch an event each time the user adds a shot", () => {
+         var triggerSpy = jest.spyOn(jQuery.fn,"trigger");
+         sut.trigger(e);
+         expect(triggerSpy).toBeCalledWith("DispersionData:add",expect.objectContaining({ left: 10,  top: 10}));
+         
+        jQuery(window).trigger("Distance:set",{distance:255});
+        sut.trigger(e);
+        expect(triggerSpy).toBeCalledWith("DispersionData:add",expect.objectContaining({ left: 10,  top: 10, targetDistance: 255}));
+
+        jQuery(window).trigger("club-selection:changed",{club:"testClub"});
+        sut.trigger(e);
+        expect(triggerSpy).toBeCalledWith("DispersionData:add",expect.objectContaining({ left: 10,  top: 10, targetDistance: 255, chosenClub: "testClub"}));
+      });
 });
 
 describe("When the user changes the target distance", () => {

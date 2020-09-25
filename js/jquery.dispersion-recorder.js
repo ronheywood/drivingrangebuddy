@@ -37,6 +37,7 @@ var shotRecordMapper = {
 
     function placeShortRecordOnCanvas(shotData) {
       $element.append(createLabelElement(shotData));
+      $(window).trigger('DispersionData:add',shotData);
     }
 
     var handleClick = function (e) {
