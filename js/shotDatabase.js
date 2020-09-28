@@ -17,4 +17,4 @@ var database = {
 jQuery(window).on('DispersionData:add',function(e,args){
     database.setItem("DispersionData",args);
 });
-module.exports = database;
+if(typeof module !== 'undefined') module.exports = database;
