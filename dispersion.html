@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="black" />
+
+    <link rel="apple-touch-icon" href="/icons/msteams.msteams-192-192.png">
+
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Driving Range Buddy</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet'>
+    <link href='css/app.css' rel='stylesheet'>
+</head>
+
+<body>
+
+    <main role="main" class="container">
+
+        <h1 class="white">Dispersion Data</h1>
+        <p class="clubSelectionHeadline white center">Select a Club</p>
+        <div class="clubSelectionContainer row" data-bind="club-selection"></div>
+
+        <div class="dispersionDataCanvas row ">
+            <article class="col dispersionCanvas align-self-start" data-role="dispersionDataCanvas">
+
+            </article>
+        </div>
+
+    </main><!-- /.container -->
+
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="./js/jquery.slim.min.js" crossorigin="anonymous"></script>
+    <script src="./js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!-- app resources -->
+    <script src="./js/configuration.js" crossorigin="anonymous"></script>
+    <script src="./js/shotDatabase.js" crossorigin="anonymous"></script>
+    <script src="./js/jquery.clublist.js" crossorigin="anonymous"></script>
+    <script>
+        $(function(){$('[data-bind="club-selection"]').clubList(options);});
+
+        var nineIron = [
+            [-5,100],
+            [10,110],
+            [12,75],
+            [20,120],
+        ];
+        var driver = [
+            [-30,200],
+            [-20,205],
+            [35,175],
+            [-10,220],
+        ];
+        var minX = -25;
+        var maxX = 15;
+        var minY = -20;
+        var maxY = -5;
+
+        var container = $('[data-role="dispersionDataCanvas"]')[0];
+        Highcharts.chart(container, {
+            title: {
+                text: 'Club Dispersions'
+            },
+            xAxis: {
+                min: -50,
+                max: 50,
+                title: {
+                    test: "Left / Right"
+                }
+            },
+            yAxis: {
+                min: 0,
+                max: 250,
+                title: {
+                    text: "Yards"
+                },
+            },
+            chart: {
+                type: 'scatter',
+                events: {
+                    load: function () {
+                        var chart = this,
+                            nineIron = chart.series[0],
+                            driver = chart.series[1];;
+                        var minX = Math.floor(nineIron.points.sort((a,b) => a.plotX -b.plotX)[0].plotX);
+                        var maxX = Math.floor(nineIron.points.sort((a,b) => b.plotX -a.plotX)[0].plotX);
+                        
+                        chart.renderer.circle(180, 310, 60)
+                            .attr({
+                                fill: 'transparent',
+                                stroke: '#ffb3ff',
+                                fill: '#ffe6ff',
+                                transform: 'rotate(-5,100,100),scale(2,0.6)',
+                                'stroke-width': 5
+                            }).add(nineIron.group);
+
+                            chart.renderer.circle(160, 165, 120)
+                            .attr({
+                                fill: 'transparent',
+                                stroke: '#000',
+                                fill: '#CCC',
+                                transform: 'rotate(5,100,100),scale(2,0.25)',
+                                'stroke-width': 1
+                            }).add(driver.group);
+                    }
+                }
+            },
+            series: [{
+                data: nineIron,
+                name: "9i"
+            },
+            {
+                data: driver,
+                name: "1W"
+            }]
+        });
+    </script>
+</body>
+
+</html>
