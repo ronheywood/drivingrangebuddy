@@ -53,19 +53,19 @@
     <script src="./js/shotDatabase.js" crossorigin="anonymous"></script>
     <script src="./js/jquery.clublist.js" crossorigin="anonymous"></script>
     <script>
-        $(function(){$('[data-bind="club-selection"]').clubList(options);});
+        $(function () { $('[data-bind="club-selection"]').clubList(options); });
 
         var nineIron = [
-            [-5,100],
-            [10,110],
-            [12,75],
-            [20,120],
+            [-5, 100],
+            [10, 110],
+            [12, 75],
+            [20, 120],
         ];
         var driver = [
-            [-30,200],
-            [-20,205],
-            [35,175],
-            [-10,220],
+            [-30, 200],
+            [-20, 205],
+            [35, 175],
+            [-10, 220],
         ];
         var minX = -25;
         var maxX = 15;
@@ -74,16 +74,16 @@
 
         var container = $('[data-role="dispersionDataCanvas"]')[0];
 
-        var getElipse = function(data,chart){
+        var getElipse = function (data, chart) {
             var clipBox = chart.clipBox;
-            var sortedByX = data.points.sort((a,b) => a.plotX -b.plotX);
+            var sortedByX = data.points.sort((a, b) => a.plotX - b.plotX);
             var minX = Math.floor(sortedByX[0].plotX);
-            var maxX = Math.floor(sortedByX[sortedByX.length-1].plotX);
+            var maxX = Math.floor(sortedByX[sortedByX.length - 1].plotX);
             var centerXPlot = sortedByX[Math.floor(sortedByX.length / 2)];
             var centerX = centerXPlot.plotX;
             var pointX = chart.xAxis[0].translate(centerX, true);
-            
-            var sortedByY = data.points.sort((a,b) => a.plotY -b.plotY);
+
+            var sortedByY = data.points.sort((a, b) => a.plotY - b.plotY);
             var centerYPlot = sortedByY[Math.floor(sortedByY.length / 2)];
             var centerY = chart.yAxis[0].translate(centerYPlot);
             console.log(centerYPlot);
@@ -92,25 +92,25 @@
             console.log(pointY);
 
             var minY = Math.floor(sortedByY[0].plotY);
-            var maxY = Math.floor(sortedByY[sortedByY.length-1].plotY);
+            var maxY = Math.floor(sortedByY[sortedByY.length - 1].plotY);
 
             var radiusX = ((maxX - minX) * 0.5) + (clipBox.width * 0.05);
             var radiusY = ((maxY - minY) * 0.5) + (clipBox.height * 0.05);
-            
-            var transform = 'rotate(12,0,0),scale(1,1)';
+
+            var transform = '';//'rotate(12,0,0),scale(1,1)';
             return {
-                            cx: centerX,
-                            cy: centerY,
-                            rx: radiusX,
-                            ry: radiusY,
-                            'stroke-width': 2,
-                            stroke: '#ffb3ff',
-                            fill: '#ffe6ff',
-                            zIndex: 0,
-                            transform: transform
-                        };
+                cx: centerX,
+                cy: centerY,
+                rx: radiusX,
+                ry: radiusY,
+                'stroke-width': 2,
+                stroke: '#ffb3ff',
+                fill: '#ffe6ff',
+                zIndex: 0,
+                transform: transform
+            };
         }
-        
+
         Highcharts.chart(container, {
             title: {
                 text: 'Club Dispersions'
@@ -132,28 +132,24 @@
             chart: {
                 type: 'scatter',
                 events: {
-                    render: function () {
+                    render: function(){
+                        var withGrouping = options.chart.drawGroupingConfidenceElipse || false;
+                        if(!withGrouping) return;
                         var chart = this;
-                        var clipBox = this.clipBox;
-                        
+                        var clipBox = chart.clipBox;
+
                         var nineIron = chart.series[0],
                             driver = chart.series[1];
-                            if(chart.myelipse) { chart.myelipse.destroy() }
+                        if (chart.myelipse) { chart.myelipse.destroy() }
 
-                            chart.myelipse = chart.renderer.createElement('ellipse')
-                            .attr(getElipse(nineIron,this))
+                        chart.myelipse = chart.renderer.createElement('ellipse')
+                            .attr(getElipse(nineIron, chart))
                             .add();
 
-
-                            // var [centerX,centerY,radius,transform] = getElipse(driver,clipBox);
-                            // chart.renderer.circle(centerX, centerY, radius)
-                            // .attr({
-                            //     fill: 'transparent',
-                            //     stroke: '#000',
-                            //     fill: '#CCC',
-                            //     transform: transform,
-                            //     'stroke-width': 1
-                            // }).add(driver.group);
+                        if (chart.myelipseDriver) { chart.myelipseDriver.destroy() }
+                        chart.myelipseDriver = chart.renderer.createElement('ellipse')
+                            .attr(getElipse(driver, chart))
+                            .add();
                     }
                 }
             },

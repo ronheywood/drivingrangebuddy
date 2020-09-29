@@ -15,5 +15,8 @@ var options = {
         "52 degree",
         "56 degree",
         "60 degree"
-    ]
+    ],
+    chart: {
+        drawGroupingConfidenceElipse: false
+    }
 }
