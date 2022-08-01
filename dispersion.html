@@ -52,7 +52,10 @@
     <script src="./js/configuration.js" crossorigin="anonymous"></script>
     <script src="./js/shotDatabase.js" crossorigin="anonymous"></script>
     <script src="./js/jquery.clublist.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.5.3/math.js"></script>
+    <script src="./js/covariance.js"></script>
     <script>
+
         $(function () { $('[data-bind="club-selection"]').clubList(options); });
 
         var nineIron = [
@@ -60,6 +63,12 @@
             [10, 110],
             [12, 75],
             [20, 120],
+            [-20, 127],
+            [-16, 125],
+            [-12, 118],
+            [4, 15],
+            [-10, 80],
+            [22, 30],
         ];
         var driver = [
             [-30, 200],
@@ -74,42 +83,88 @@
 
         var container = $('[data-role="dispersionDataCanvas"]')[0];
 
-        var getElipse = function (data, chart) {
-            var clipBox = chart.clipBox;
-            var sortedByX = data.points.sort((a, b) => a.plotX - b.plotX);
-            var minX = Math.floor(sortedByX[0].plotX);
-            var maxX = Math.floor(sortedByX[sortedByX.length - 1].plotX);
-            var centerXPlot = sortedByX[Math.floor(sortedByX.length / 2)];
-            var centerX = centerXPlot.plotX;
-            var pointX = chart.xAxis[0].translate(centerX, true);
 
-            var sortedByY = data.points.sort((a, b) => a.plotY - b.plotY);
-            var centerYPlot = sortedByY[Math.floor(sortedByY.length / 2)];
-            var centerY = chart.yAxis[0].translate(centerYPlot);
-            console.log(centerYPlot);
-            var centerY = centerYPlot.plotY;
-            var pointY = chart.yAxis[0].translate(centerY, true);
-            console.log(pointY);
-
-            var minY = Math.floor(sortedByY[0].plotY);
-            var maxY = Math.floor(sortedByY[sortedByY.length - 1].plotY);
-
-            var radiusX = ((maxX - minX) * 0.5) + (clipBox.width * 0.05);
-            var radiusY = ((maxY - minY) * 0.5) + (clipBox.height * 0.05);
-
-            var transform = '';//'rotate(12,0,0),scale(1,1)';
+        function getConfidence(dataSeries) {
             return {
-                cx: centerX,
-                cy: centerY,
-                rx: radiusX,
-                ry: radiusY,
-                'stroke-width': 2,
-                stroke: '#ffb3ff',
-                fill: '#ffe6ff',
-                zIndex: 0,
-                transform: transform
+                x: dataSeries.data[0].plotX,
+                y: dataSeries.data[0].plotY,
+                radius: 50
             };
         }
+
+        function confidenceElipse(seriesData, confidence) {
+            confidence = confidence || 0.95;
+            console.log(seriesData);
+            var x = seriesData.map(function (value, index) { return value.plotX; }),
+                y = seriesData.map(function (value, index) { return value.plotY; });
+
+            var meanX = math.mean(x);
+            var meanY = math.mean(y);
+
+            var cov = covariance(x, y);
+
+            var bestVariance = cov[0][1];
+            var worstVariance = cov[0][0];
+
+            var eigs = math.eigs(cov);
+            //console.log(eigs.values.reverse());
+            var eig1 = eigs.values[0],
+                eig2 = eigs.values[1];
+
+            var chiConfidence = invChiSquareCDF(confidence, 2);
+
+            var elipseAngleRadians = Math.atan2(bestVariance, eig1 - worstVariance);
+            var rotationMatrix = {
+                rotationMatrixAngle1: Math.cos(elipseAngleRadians),
+                rotationMatrixAngle2: Math.sin(elipseAngleRadians),
+                rotationMatrixAngle3: -Math.sin(elipseAngleRadians)
+            };
+
+            var elipse = {
+                centreX: meanX,
+                centreY: meanY,
+                elipseAxisLength1: Math.sqrt(eig1) * Math.sqrt(chiConfidence),
+                elipseAxisLength2: Math.sqrt(eig2) * Math.sqrt(chiConfidence),
+                elipseAngleRadians: elipseAngleRadians,
+                elipseAngleDeg: elipseAngleRadians * 180 / Math.PI,
+                rotationMatrix: rotationMatrix
+            };
+            return elipse;
+        }
+
+        function getPath(width, height) {
+            var path = [],
+                centerX = width * 0.5,
+                centerY = height * 0.56,
+                r = width * 0.35,
+                rFraction,
+                x,
+                y,
+                i,
+                angle;
+
+            //loop to add points to the path
+            for (i = 0; i < 32; i = i + 1) {
+                angle = i * Math.PI / 16;
+                if (i === 0) {
+                    path.push('M');
+                } else if (i === 1) {
+                    path.push('L');
+                }
+                if (i % 4 === 0) {
+                    rFraction = 1;
+                } else if (i % 2 === 0) {
+                    rFraction = 0.7;
+                } else {
+                    rFraction = 0.5;
+                }
+                x = centerX + Math.cos(angle) * r * rFraction;
+                y = centerY + Math.sin(angle) * r * rFraction;
+                path.push(x, y);
+            }
+            return path;
+        }
+
 
         Highcharts.chart(container, {
             title: {
@@ -132,24 +187,44 @@
             chart: {
                 type: 'scatter',
                 events: {
-                    render: function(){
-                        var withGrouping = options.chart.drawGroupingConfidenceElipse || false;
-                        if(!withGrouping) return;
-                        var chart = this;
-                        var clipBox = chart.clipBox;
+                    load: function () {
+                        console.log("rendering");
+                        var chart = this
+                        series = chart.series[0];
 
-                        var nineIron = chart.series[0],
-                            driver = chart.series[1];
-                        if (chart.myelipse) { chart.myelipse.destroy() }
+                        var confidence = getConfidence(series)
+                        var elipse = confidenceElipse(series.data, .95);
 
-                        chart.myelipse = chart.renderer.createElement('ellipse')
-                            .attr(getElipse(nineIron, chart))
-                            .add();
+                        var scale = elipse.elipseAxisLength1 / elipse.elipseAxisLength2;
+                        
+                        //var transformation = 'rotate('+elipse.rotationMatrix.rotationMatrixAngle1+','+elipse.rotationMatrix.rotationMatrixAngle3+','+elipse.rotationMatrix.rotationMatrixAngle2+'),scale(1,'+flat+')';
 
-                        if (chart.myelipseDriver) { chart.myelipseDriver.destroy() }
-                        chart.myelipseDriver = chart.renderer.createElement('ellipse')
-                            .attr(getElipse(driver, chart))
-                            .add();
+                        var adjustedX = elipse.centreX;
+                        var radius = 49;
+                        var startX = (elipse.centreX - elipse.elipseAxisLength2/2);
+                        var startY = elipse.centreY;
+                        var height = elipse.elipseAxisLength1;
+
+                        var transformation = 'scale(1.5,1),rotate(0,608,162)';
+                        //var path = ['M', startX,startY,'Q', startX + elipse.elipseAxisLength2/2 ,startY + -elipse.elipseAxisLength1/2,startX+elipse.elipseAxisLength2,startY,'Q',startX + elipse.elipseAxisLength2/2 ,startY + elipse.elipseAxisLength1/2,startX,startY];
+
+                        //(radius x radius y x-axis-rotation large-arc-flag sweep-flag x y)
+                        var path = ['M',startX,startY,'a',elipse.elipseAxisLength2/2,elipse.elipseAxisLength1/2,-elipse.elipseAngleRadians,0,1,elipse.elipseAxisLength1,startY,'z']
+                        console.log(path);
+                        chart
+                            .renderer
+                            .path(path)
+                            .attr({fill: 'green',
+                                stroke: 'red',
+                                'stroke-width': 1})
+                            .add(series.group);
+
+                        // chart.renderer.circle(adjustedX, 162, radius)
+                        //     .attr({
+                        //         fill: 'transparent',
+                        //         stroke: 'red',
+                        //         'stroke-width': 1
+                        //     }).add(series.group);
                     }
                 }
             },

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="black" />
+
+    <link rel="apple-touch-icon" href="/icons/msteams.msteams-192-192.png">
+
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Driving Range Buddy</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet'>
+    <link href='css/app.css' rel='stylesheet'>
+</head>
+
+<body>
+
+    <main role="main" class="container">
+
+        <h1 class="white">Dispersion Data</h1>
+        <p class="clubSelectionHeadline white center">Select a Club</p>
+        <div class="clubSelectionContainer row" data-bind="club-selection"></div>
+
+        <div class="dispersionDataCanvas row ">
+            <article class="col dispersionCanvas align-self-start" data-role="dispersionDataCanvas">
+
+            </article>
+        </div>
+
+    </main><!-- /.container -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.5.3/math.js"></script>
+    <script src="./js/covariance.js"></script>
+    <script>
+
+        // Simulate some data...
+
+        var nineIron = [
+            [27.11, 13.8],
+            [26.77, 13.42],
+            [27.35, 12.76],
+            [29.2, 14.88],
+            [27.44, 14.56],
+            [26.16, 14.35],
+            [26.25, 13.86],
+            [31.21, 17.61],
+            [29.34, 16.56],
+            [30.06, 14.77]
+        ];
+
+    function confidenceElipse(seriesData,confidence){
+        confidence = confidence || 0.95;
+        
+        var x = seriesData.map(function (value, index) { return value[0]; }),
+            y = seriesData.map(function (value, index) { return value[1]; });
+        
+        var meanX = math.mean(x);
+        var meanY = math.mean(x);
+
+        var cov = covariance(x, y);
+        
+        var bestVariance = cov[0][1];
+        var worstVariance = cov[0][0];
+
+        var eigs = math.eigs(cov);
+        console.log(eigs.values.reverse());
+        var eig1 = eigs.values[0],
+        eig2 = eigs.values[1];
+        
+
+        //var confidence = 0.675;
+        //var chiConfidence67 = invChiSquareCDF(confidence,2);
+        
+        var chiConfidence95 = invChiSquareCDF(confidence,2);
+        
+        var elipseAngleRadians = Math.atan2(bestVariance,eig1-worstVariance);
+        var rotationMatrix = {
+            rotationMatrixAngle1: Math.cos(elipseAngleRadians),
+            rotationMatrixAngle2: Math.sin(elipseAngleRadians),
+            rotationMatrixAngle3: -Math.sin(elipseAngleRadians)};
+
+        
+        // var elipse_67 = {
+        //     centreX: meanX,
+        //     centreY: meanY,
+        //     elipseAxisLength1: Math.sqrt(eig1)*Math.sqrt(chiConfidence67),
+        //     elipseAxisLength2: Math.sqrt(eig2)*Math.sqrt(chiConfidence67),
+        //     elipseAngleRadians: elipseAngleRadians,
+        //     elipseAngleDeg: elipseAngleRadians*180/Math.PI,
+        //     rotationMatrix: rotationMatrix
+        // };
+        
+        var elipse_95 = {
+            centreX: meanX,
+            centreY: meanY,
+            elipseAxisLength1: Math.sqrt(eig1)*Math.sqrt(chiConfidence95),
+            elipseAxisLength2: Math.sqrt(eig2)*Math.sqrt(chiConfidence95),
+            elipseAngleRadians: elipseAngleRadians,
+            elipseAngleDeg: elipseAngleRadians*180/Math.PI,
+            rotationMatrix: rotationMatrix
+        };
+        return elipse_95;
+    }
+
+    </script>
+</body>
+
+</html>
