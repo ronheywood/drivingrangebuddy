@@ -55,8 +55,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.5.3/math.js"></script>
     <script src="./js/covariance.js"></script>
     <script>
-
-        $(function () { $('[data-bind="club-selection"]').clubList(options); });
+    $(function () { $('[data-bind="club-selection"]').clubList(options); });
 
         var nineIron = [
             [-5, 100],
@@ -83,66 +82,90 @@
 
         var container = $('[data-role="dispersionDataCanvas"]')[0];
 
-
         function getConfidence(dataSeries) {
             return {
                 x: dataSeries.data[0].plotX,
                 y: dataSeries.data[0].plotY,
                 radius: 50
             };
+        }        
+        
+        function extractShotCoordinates(seriesData) {
+            return {
+                x: seriesData.map(function (value) { return value[0]; }),
+                y: seriesData.map(function (value) { return value[1]; })
+            };
+        }
+
+        function calculateMeanPosition(coordinates) {
+            return {
+                x: math.mean(coordinates.x),
+                y: math.mean(coordinates.y)
+            };
+        }
+
+        function calculateEllipseRotation(cov, eigenvalues) {
+            var bestVariance = cov[0][1];
+            var worstVariance = cov[0][0];
+            var angleRadians = Math.atan2(bestVariance, eigenvalues[0] - worstVariance);
+            
+            return {
+                angleRadians: angleRadians,
+                angleDegrees: angleRadians * 180 / Math.PI,
+                matrix: {
+                    angle1: Math.cos(angleRadians),
+                    angle2: Math.sin(angleRadians),
+                    angle3: -Math.sin(angleRadians)
+                }
+            };
+        }
+
+        function calculateEllipseScaling(coordinates, confidence) {
+            // Get base statistical measures
+            var sampleCount = coordinates.x.length;
+            var chiConfidence = invChiSquareCDF(confidence, 2);
+            
+            // Base scales represent expected dispersion patterns in golf
+            var baseXScale = 2.0; // 200% for lateral dispersion (wider variance expected)
+            var baseYScale = 1.0; // 100% for distance (tighter control expected)
+            
+            // Adjust scale based on sample size - fewer samples mean less confidence
+            var sampleSizeFactor = 1 / Math.sqrt(sampleCount);
+            
+            return {
+                x: baseXScale * sampleSizeFactor,
+                y: baseYScale * sampleSizeFactor,
+                confidence: Math.sqrt(chiConfidence)
+            };
         }
 
         function confidenceElipse(seriesData, confidence) {
             confidence = confidence || 0.95;
-              // Use raw data points instead of plotX/plotY
-            var x = seriesData.map(function (value) { return value[0]; }),
-                y = seriesData.map(function (value) { return value[1]; });            var meanX = math.mean(x);
-            var meanY = math.mean(y);  // Calculate mean using y values for vertical position
             
-            console.log('Data points:', seriesData);
-            console.log('X values:', x);
-            console.log('Y values:', y);
-            console.log('Mean X:', meanX, 'Mean Y:', meanY);
-
-            var cov = covariance(x, y);
+            // Extract raw coordinates
+            var coords = extractShotCoordinates(seriesData);
+            var mean = calculateMeanPosition(coords);
             
-            var bestVariance = cov[0][1];
-            var worstVariance = cov[0][0];            var eigs = math.eigs(cov);            
-            var eig1 = eigs.values[0],
-                eig2 = eigs.values[1];            // Calculate standard deviations
-            var stdX = Math.sqrt(Math.abs(cov[0][0]));
-            var stdY = Math.sqrt(Math.abs(cov[1][1]));
+            // Calculate statistical measures
+            var cov = covariance(coords.x, coords.y);
+            var eigs = math.eigs(cov);
             
-            // Apply chi-square scaling for confidence interval
-            var chiConfidence = invChiSquareCDF(confidence, 2);
-            var scaleFactor = Math.sqrt(chiConfidence);
-
-            // Calculate ellipse angle from eigenvectors
-            var elipseAngleRadians = Math.atan2(bestVariance, eig1 - worstVariance);
-            var rotationMatrix = {
-                rotationMatrixAngle1: Math.cos(elipseAngleRadians),
-                rotationMatrixAngle2: Math.sin(elipseAngleRadians),
-                rotationMatrixAngle3: -Math.sin(elipseAngleRadians)
-            };            // Use constant base scales for x and y, then adjust by sample size
-            var sampleSizeFactor = 1 / Math.sqrt(x.length); // Larger samples = smaller adjustment
-            var baseXScale = 2.0; // 200% of total lateral range
-            var baseYScale = 1.0; // 100% of total distance range
+            // Calculate ellipse properties
+            var rotation = calculateEllipseRotation(cov, eigs.values);
+            var scaling = calculateEllipseScaling(coords, confidence);
             
-            // Scale axes independently
-            var xScale = baseXScale * sampleSizeFactor;
-            var yScale = baseYScale * sampleSizeFactor;
-            
-            var elipse = {
-                centreX: meanX,
-                centreY: meanY,
-                elipseAxisLength1: Math.sqrt(eig1) * scaleFactor * xScale,
-                elipseAxisLength2: Math.sqrt(eig2) * scaleFactor * yScale,
-                elipseAngleRadians: elipseAngleRadians,
-                elipseAngleDeg: elipseAngleRadians * 180 / Math.PI,
-                rotationMatrix: rotationMatrix
+            return {
+                centreX: mean.x,
+                centreY: mean.y,
+                elipseAxisLength1: Math.sqrt(eigs.values[0]) * scaling.confidence * scaling.x,
+                elipseAxisLength2: Math.sqrt(eigs.values[1]) * scaling.confidence * scaling.y,
+                elipseAngleRadians: rotation.angleRadians,
+                elipseAngleDeg: rotation.angleDegrees,
+                rotationMatrix: rotation.matrix
             };
-            return elipse;
-        }        // Helper function to draw an ellipse for a given data series
+        }        
+        
+        // Helper function to draw an ellipse for a given data series
         function drawConfidenceEllipse(chart, data, confidence) {
             // Calculate ellipse parameters
             var elipse = confidenceElipse(data, confidence);
