@@ -55,7 +55,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.5.3/math.js"></script>
     <script src="./js/covariance.js"></script>
     <script>
-    $(function () { $('[data-bind="club-selection"]').clubList(options); });
+        $(function () { $('[data-bind="club-selection"]').clubList(options); });
 
         var nineIron = [
             [-5, 100],
@@ -88,8 +88,8 @@
                 y: dataSeries.data[0].plotY,
                 radius: 50
             };
-        }        
-        
+        }
+
         function extractShotCoordinates(seriesData) {
             return {
                 x: seriesData.map(function (value) { return value[0]; }),
@@ -108,7 +108,7 @@
             var bestVariance = cov[0][1];
             var worstVariance = cov[0][0];
             var angleRadians = Math.atan2(bestVariance, eigenvalues[0] - worstVariance);
-            
+
             return {
                 angleRadians: angleRadians,
                 angleDegrees: angleRadians * 180 / Math.PI,
@@ -124,14 +124,14 @@
             // Get base statistical measures
             var sampleCount = coordinates.x.length;
             var chiConfidence = invChiSquareCDF(confidence, 2);
-            
+
             // Base scales represent expected dispersion patterns in golf
             var baseXScale = 2.0; // 200% for lateral dispersion (wider variance expected)
             var baseYScale = 1.0; // 100% for distance (tighter control expected)
-            
+
             // Adjust scale based on sample size - fewer samples mean less confidence
             var sampleSizeFactor = 1 / Math.sqrt(sampleCount);
-            
+
             return {
                 x: baseXScale * sampleSizeFactor,
                 y: baseYScale * sampleSizeFactor,
@@ -141,19 +141,19 @@
 
         function confidenceElipse(seriesData, confidence) {
             confidence = confidence || 0.95;
-            
+
             // Extract raw coordinates
             var coords = extractShotCoordinates(seriesData);
             var mean = calculateMeanPosition(coords);
-            
+
             // Calculate statistical measures
             var cov = covariance(coords.x, coords.y);
             var eigs = math.eigs(cov);
-            
+
             // Calculate ellipse properties
             var rotation = calculateEllipseRotation(cov, eigs.values);
             var scaling = calculateEllipseScaling(coords, confidence);
-            
+
             return {
                 centreX: mean.x,
                 centreY: mean.y,
@@ -163,38 +163,38 @@
                 elipseAngleDeg: rotation.angleDegrees,
                 rotationMatrix: rotation.matrix
             };
-        }        
-        
+        }
+
         // Helper function to draw an ellipse for a given data series
         function drawConfidenceEllipse(chart, data, confidence) {
             // Calculate ellipse parameters
             var elipse = confidenceElipse(data, confidence);
-              // Create ellipse path using parametric equations
+            // Create ellipse path using parametric equations
             var steps = 100; // More steps = smoother ellipse
             var path = [];
-              // Convert center point to plot coordinates using the axis methods
+            // Convert center point to plot coordinates using the axis methods
             var centerX = chart.xAxis[0].toPixels(elipse.centreX);
             var centerY = chart.yAxis[0].toPixels(elipse.centreY);
-            
+
             // Generate points around the ellipse
             for (var i = 0; i <= steps; i++) {
                 var angle = (i / steps) * 2 * Math.PI;
                 // Calculate x and y using parametric equations for a rotated ellipse
                 // For golf shots, y represents distance (major axis) and x represents left/right (minor axis)
-                var dataX = elipse.centreX + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.cos(elipse.elipseAngleRadians) - 
-                           elipse.elipseAxisLength1 * Math.sin(angle) * Math.sin(elipse.elipseAngleRadians));
-                var dataY = elipse.centreY + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.sin(elipse.elipseAngleRadians) + 
-                           elipse.elipseAxisLength1 * Math.sin(angle) * Math.cos(elipse.elipseAngleRadians));
+                var dataX = elipse.centreX + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.cos(elipse.elipseAngleRadians) -
+                    elipse.elipseAxisLength1 * Math.sin(angle) * Math.sin(elipse.elipseAngleRadians));
+                var dataY = elipse.centreY + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.sin(elipse.elipseAngleRadians) +
+                    elipse.elipseAxisLength1 * Math.sin(angle) * Math.cos(elipse.elipseAngleRadians));
                 var plotX = chart.xAxis[0].toPixels(dataX);
                 var plotY = chart.yAxis[0].toPixels(dataY);
-                  if (i === 0) {
+                if (i === 0) {
                     path.push('M', plotX, plotY);
                 } else {
                     path.push('L', plotX, plotY);
                 }
             }
             path.push('Z'); // Close the path
-            
+
             // Draw the ellipse
             chart.renderer.path(path)
                 .attr({
@@ -203,14 +203,14 @@
                     'stroke-width': 1
                 })
                 .add();
-                  // Draw center point (mean position)
+            // Draw center point (mean position)
             chart.renderer.circle(centerX, centerY, 3)
                 .attr({
                     fill: 'red',
                     stroke: 'none'
                 })
                 .add();
-                  // Add statistics annotation with club name            
+            // Add statistics annotation with club name            
             var clubName = data.name || (data === nineIron ? "9 Iron" : "Driver");
             chart.renderer.text(
                 clubName + '<br>' +
@@ -219,10 +219,10 @@
                 centerX + 10,
                 centerY - 10
             )
-            .attr({
-                useHTML: true
-            })
-            .add();
+                .attr({
+                    useHTML: true
+                })
+                .add();
         }
 
 
@@ -246,21 +246,23 @@
             },
             chart: {
                 type: 'scatter',
-                events: {                    load: function () {
+                events: {
+                    load: function () {
                         var chart = this;
-                        
+
                         // Add name property to the data arrays
                         nineIron.name = "9 Iron";
                         driver.name = "Driver";
-                        
+
                         // Draw confidence ellipse for 9 iron (95% confidence)
                         drawConfidenceEllipse(chart, nineIron, 0.95);
-                        
+
                         // Draw confidence ellipse for driver (95% confidence)
                         drawConfidenceEllipse(chart, driver, 0.95);
                     }
                 }
-            },            series: [{
+            },
+            series: [{
                 data: nineIron,
                 name: "9 Iron",
                 marker: {
