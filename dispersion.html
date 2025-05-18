@@ -169,60 +169,66 @@
         function drawConfidenceEllipse(chart, data, confidence) {
             // Calculate ellipse parameters
             var elipse = confidenceElipse(data, confidence);
-            // Create ellipse path using parametric equations
-            var steps = 100; // More steps = smoother ellipse
-            var path = [];
-            // Convert center point to plot coordinates using the axis methods
-            var centerX = chart.xAxis[0].toPixels(elipse.centreX);
-            var centerY = chart.yAxis[0].toPixels(elipse.centreY);
+            
+            // Debug log the ellipse parameters
+            console.log('Drawing ellipse for:', data.name);
+            console.log('Center:', elipse.centreX, elipse.centreY);
+            console.log('Axis lengths:', elipse.elipseAxisLength1, elipse.elipseAxisLength2);
+            console.log('Angle:', elipse.elipseAngleDeg);
 
-            // Generate points around the ellipse
+            // Generate ellipse points
+            var points = [];
+            var steps = 50;
+            
             for (var i = 0; i <= steps; i++) {
                 var angle = (i / steps) * 2 * Math.PI;
-                // Calculate x and y using parametric equations for a rotated ellipse
-                // For golf shots, y represents distance (major axis) and x represents left/right (minor axis)
-                var dataX = elipse.centreX + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.cos(elipse.elipseAngleRadians) -
+                var x = elipse.centreX + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.cos(elipse.elipseAngleRadians) -
                     elipse.elipseAxisLength1 * Math.sin(angle) * Math.sin(elipse.elipseAngleRadians));
-                var dataY = elipse.centreY + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.sin(elipse.elipseAngleRadians) +
+                var y = elipse.centreY + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.sin(elipse.elipseAngleRadians) +
                     elipse.elipseAxisLength1 * Math.sin(angle) * Math.cos(elipse.elipseAngleRadians));
-                var plotX = chart.xAxis[0].toPixels(dataX);
-                var plotY = chart.yAxis[0].toPixels(dataY);
-                if (i === 0) {
-                    path.push('M', plotX, plotY);
-                } else {
-                    path.push('L', plotX, plotY);
-                }
+                points.push([x, y]);
             }
-            path.push('Z'); // Close the path
 
-            // Draw the ellipse
-            chart.renderer.path(path)
-                .attr({
-                    fill: 'rgba(0, 255, 0, 0.1)',  // Semi-transparent green
-                    stroke: 'rgba(255, 0, 0, 0.5)', // Semi-transparent red
-                    'stroke-width': 1
-                })
-                .add();
-            // Draw center point (mean position)
-            chart.renderer.circle(centerX, centerY, 3)
-                .attr({
-                    fill: 'red',
-                    stroke: 'none'
-                })
-                .add();
-            // Add statistics annotation with club name            
-            var clubName = data.name || (data === nineIron ? "9 Iron" : "Driver");
-            chart.renderer.text(
-                clubName + '<br>' +
-                'Mean: (' + Math.round(elipse.centreX) + ', ' + Math.round(elipse.centreY) + ')<br>' +
-                'Confidence: ' + (confidence * 100) + '%',
-                centerX + 10,
-                centerY - 10
-            )
-                .attr({
-                    useHTML: true
-                })
-                .add();
+            // Debug log some points
+            console.log('First few points:', points.slice(0, 3));
+
+            // Add the ellipse as a series
+            var isNineIron = data.name === "9 Iron";
+            var color = isNineIron ? 'rgba(0, 120, 200, 0.8)' : 'rgba(200, 0, 0, 0.8)';
+            var fillColor = isNineIron ? 'rgba(0, 120, 200, 0.2)' : 'rgba(200, 0, 0, 0.2)';
+
+            points.push(points[0]); // Close the loop by adding the first point again
+
+            chart.addSeries({
+                name: data.name + ' Dispersion',
+                type: 'area',
+                data: points,
+                color: color,
+                fillColor: fillColor,
+                fillOpacity: 0.2,
+                enableMouseTracking: true,
+                marker: { enabled: false },
+                lineWidth: 2,
+                tooltip: {
+                    headerFormat: '',
+                    pointFormat: '<b>{series.name}</b><br>Confidence: ' + (confidence * 100) + '%'
+                }
+            });
+
+            // Add center point
+            chart.addSeries({
+                type: 'scatter',
+                name: data.name + ' Mean',
+                data: [[elipse.centreX, elipse.centreY]],
+                marker: {
+                    symbol: 'circle',
+                    radius: 4,
+                    fillColor: color,
+                    lineWidth: 0
+                },
+                enableMouseTracking: false,
+                showInLegend: false
+            });
         }
 
 
