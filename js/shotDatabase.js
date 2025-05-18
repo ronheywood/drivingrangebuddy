@@ -9,8 +9,12 @@ var database = {
         this.existingItems.push(args);
         window.localStorage.setItem(key,JSON.stringify(this.existingItems));
     },
-    getAllItems: function(){
-
+    getAllItems: function(key) {
+        if (this.existingItems === null) {
+            const stored = window.localStorage.getItem(key);
+            this.existingItems = stored ? JSON.parse(stored) : [];
+        }
+        return this.existingItems;
     }
 }
 
