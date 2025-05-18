@@ -107,26 +107,36 @@
             var cov = covariance(x, y);
             
             var bestVariance = cov[0][1];
-            var worstVariance = cov[0][0];
-
-            var eigs = math.eigs(cov);
+            var worstVariance = cov[0][0];            var eigs = math.eigs(cov);            
             var eig1 = eigs.values[0],
-                eig2 = eigs.values[1];
-
+                eig2 = eigs.values[1];            // Calculate standard deviations
+            var stdX = Math.sqrt(Math.abs(cov[0][0]));
+            var stdY = Math.sqrt(Math.abs(cov[1][1]));
+            
+            // Apply chi-square scaling for confidence interval
             var chiConfidence = invChiSquareCDF(confidence, 2);
+            var scaleFactor = Math.sqrt(chiConfidence);
 
+            // Calculate ellipse angle from eigenvectors
             var elipseAngleRadians = Math.atan2(bestVariance, eig1 - worstVariance);
             var rotationMatrix = {
                 rotationMatrixAngle1: Math.cos(elipseAngleRadians),
                 rotationMatrixAngle2: Math.sin(elipseAngleRadians),
                 rotationMatrixAngle3: -Math.sin(elipseAngleRadians)
-            };
-
+            };            // Use constant base scales for x and y, then adjust by sample size
+            var sampleSizeFactor = 1 / Math.sqrt(x.length); // Larger samples = smaller adjustment
+            var baseXScale = 2.0; // 200% of total lateral range
+            var baseYScale = 1.0; // 100% of total distance range
+            
+            // Scale axes independently
+            var xScale = baseXScale * sampleSizeFactor;
+            var yScale = baseYScale * sampleSizeFactor;
+            
             var elipse = {
                 centreX: meanX,
                 centreY: meanY,
-                elipseAxisLength1: Math.sqrt(eig1) * Math.sqrt(chiConfidence),
-                elipseAxisLength2: Math.sqrt(eig2) * Math.sqrt(chiConfidence),
+                elipseAxisLength1: Math.sqrt(eig1) * scaleFactor * xScale,
+                elipseAxisLength2: Math.sqrt(eig2) * scaleFactor * yScale,
                 elipseAngleRadians: elipseAngleRadians,
                 elipseAngleDeg: elipseAngleRadians * 180 / Math.PI,
                 rotationMatrix: rotationMatrix
