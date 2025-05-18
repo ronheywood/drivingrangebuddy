@@ -94,20 +94,22 @@
 
         function confidenceElipse(seriesData, confidence) {
             confidence = confidence || 0.95;
-            console.log(seriesData);
-            var x = seriesData.map(function (value, index) { return value.plotX; }),
-                y = seriesData.map(function (value, index) { return value.plotY; });
-
-            var meanX = math.mean(x);
-            var meanY = math.mean(y);
+              // Use raw data points instead of plotX/plotY
+            var x = seriesData.map(function (value) { return value[0]; }),
+                y = seriesData.map(function (value) { return value[1]; });            var meanX = math.mean(x);
+            var meanY = math.mean(y);  // Calculate mean using y values for vertical position
+            
+            console.log('Data points:', seriesData);
+            console.log('X values:', x);
+            console.log('Y values:', y);
+            console.log('Mean X:', meanX, 'Mean Y:', meanY);
 
             var cov = covariance(x, y);
-
+            
             var bestVariance = cov[0][1];
             var worstVariance = cov[0][0];
 
             var eigs = math.eigs(cov);
-            //console.log(eigs.values.reverse());
             var eig1 = eigs.values[0],
                 eig2 = eigs.values[1];
 
@@ -130,39 +132,64 @@
                 rotationMatrix: rotationMatrix
             };
             return elipse;
-        }
-
-        function getPath(width, height) {
-            var path = [],
-                centerX = width * 0.5,
-                centerY = height * 0.56,
-                r = width * 0.35,
-                rFraction,
-                x,
-                y,
-                i,
-                angle;
-
-            //loop to add points to the path
-            for (i = 0; i < 32; i = i + 1) {
-                angle = i * Math.PI / 16;
-                if (i === 0) {
-                    path.push('M');
-                } else if (i === 1) {
-                    path.push('L');
-                }
-                if (i % 4 === 0) {
-                    rFraction = 1;
-                } else if (i % 2 === 0) {
-                    rFraction = 0.7;
+        }        // Helper function to draw an ellipse for a given data series
+        function drawConfidenceEllipse(chart, data, confidence) {
+            // Calculate ellipse parameters
+            var elipse = confidenceElipse(data, confidence);
+              // Create ellipse path using parametric equations
+            var steps = 100; // More steps = smoother ellipse
+            var path = [];
+              // Convert center point to plot coordinates using the axis methods
+            var centerX = chart.xAxis[0].toPixels(elipse.centreX);
+            var centerY = chart.yAxis[0].toPixels(elipse.centreY);
+            
+            // Generate points around the ellipse
+            for (var i = 0; i <= steps; i++) {
+                var angle = (i / steps) * 2 * Math.PI;
+                // Calculate x and y using parametric equations for a rotated ellipse
+                // For golf shots, y represents distance (major axis) and x represents left/right (minor axis)
+                var dataX = elipse.centreX + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.cos(elipse.elipseAngleRadians) - 
+                           elipse.elipseAxisLength1 * Math.sin(angle) * Math.sin(elipse.elipseAngleRadians));
+                var dataY = elipse.centreY + (elipse.elipseAxisLength2 * Math.cos(angle) * Math.sin(elipse.elipseAngleRadians) + 
+                           elipse.elipseAxisLength1 * Math.sin(angle) * Math.cos(elipse.elipseAngleRadians));
+                var plotX = chart.xAxis[0].toPixels(dataX);
+                var plotY = chart.yAxis[0].toPixels(dataY);
+                  if (i === 0) {
+                    path.push('M', plotX, plotY);
                 } else {
-                    rFraction = 0.5;
+                    path.push('L', plotX, plotY);
                 }
-                x = centerX + Math.cos(angle) * r * rFraction;
-                y = centerY + Math.sin(angle) * r * rFraction;
-                path.push(x, y);
             }
-            return path;
+            path.push('Z'); // Close the path
+            
+            // Draw the ellipse
+            chart.renderer.path(path)
+                .attr({
+                    fill: 'rgba(0, 255, 0, 0.1)',  // Semi-transparent green
+                    stroke: 'rgba(255, 0, 0, 0.5)', // Semi-transparent red
+                    'stroke-width': 1
+                })
+                .add();
+                  // Draw center point (mean position)
+            chart.renderer.circle(centerX, centerY, 3)
+                .attr({
+                    fill: 'red',
+                    stroke: 'none'
+                })
+                .add();
+                  // Add statistics annotation with club name            
+            var clubName = data.name || (data === nineIron ? "9 Iron" : "Driver");
+            chart.renderer.text(
+                clubName + '<br>' +
+                'Mean: (' + Math.round(elipse.centreX) + ', ' + Math.round(elipse.centreY) + ')<br>' +
+                'Confidence: ' + (confidence * 100) + '%',
+                centerX + 10,
+                centerY - 10
+            )
+            .attr({
+                useHTML: true
+            })
+            .add();
         }
 
 
@@ -186,55 +213,41 @@
             },
             chart: {
                 type: 'scatter',
-                events: {
-                    load: function () {
-                        console.log("rendering");
-                        var chart = this
-                        series = chart.series[0];
-
-                        var confidence = getConfidence(series)
-                        var elipse = confidenceElipse(series.data, .95);
-
-                        var scale = elipse.elipseAxisLength1 / elipse.elipseAxisLength2;
+                events: {                    load: function () {
+                        var chart = this;
                         
-                        //var transformation = 'rotate('+elipse.rotationMatrix.rotationMatrixAngle1+','+elipse.rotationMatrix.rotationMatrixAngle3+','+elipse.rotationMatrix.rotationMatrixAngle2+'),scale(1,'+flat+')';
-
-                        var adjustedX = elipse.centreX;
-                        var radius = 49;
-                        var startX = (elipse.centreX - elipse.elipseAxisLength2/2);
-                        var startY = elipse.centreY;
-                        var height = elipse.elipseAxisLength1;
-
-                        var transformation = 'scale(1.5,1),rotate(0,608,162)';
-                        //var path = ['M', startX,startY,'Q', startX + elipse.elipseAxisLength2/2 ,startY + -elipse.elipseAxisLength1/2,startX+elipse.elipseAxisLength2,startY,'Q',startX + elipse.elipseAxisLength2/2 ,startY + elipse.elipseAxisLength1/2,startX,startY];
-
-                        //(radius x radius y x-axis-rotation large-arc-flag sweep-flag x y)
-                        var path = ['M',startX,startY,'a',elipse.elipseAxisLength2/2,elipse.elipseAxisLength1/2,-elipse.elipseAngleRadians,0,1,elipse.elipseAxisLength1,startY,'z']
-                        console.log(path);
-                        chart
-                            .renderer
-                            .path(path)
-                            .attr({fill: 'green',
-                                stroke: 'red',
-                                'stroke-width': 1})
-                            .add(series.group);
-
-                        // chart.renderer.circle(adjustedX, 162, radius)
-                        //     .attr({
-                        //         fill: 'transparent',
-                        //         stroke: 'red',
-                        //         'stroke-width': 1
-                        //     }).add(series.group);
+                        // Add name property to the data arrays
+                        nineIron.name = "9 Iron";
+                        driver.name = "Driver";
+                        
+                        // Draw confidence ellipse for 9 iron (95% confidence)
+                        drawConfidenceEllipse(chart, nineIron, 0.95);
+                        
+                        // Draw confidence ellipse for driver (95% confidence)
+                        drawConfidenceEllipse(chart, driver, 0.95);
                     }
                 }
-            },
-            series: [{
+            },            series: [{
                 data: nineIron,
-                name: "9i"
+                name: "9 Iron",
+                marker: {
+                    symbol: 'circle',
+                    radius: 6,
+                    fillColor: 'rgba(0, 120, 200, 0.8)',
+                    lineColor: 'rgba(0, 120, 200, 1)',
+                    lineWidth: 1
+                }
             },
             {
                 data: driver,
-                name: "1W"
+                name: "Driver",
+                marker: {
+                    symbol: 'circle',
+                    radius: 6,
+                    fillColor: 'rgba(200, 0, 0, 0.8)',
+                    lineColor: 'rgba(200, 0, 0, 1)',
+                    lineWidth: 1
+                }
             }]
         });
     </script>
