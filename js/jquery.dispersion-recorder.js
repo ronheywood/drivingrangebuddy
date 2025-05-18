@@ -33,11 +33,16 @@ var shotRecordMapper = {
       label.css({ 'position': 'absolute', 'left': shotData.left, 'top': shotData.top });
       label.text(shotRecordMapper.compile(label.text(), shotData));
       return label;
-    }
-
+    }    
+    
     function placeShortRecordOnCanvas(shotData) {
+      // Only record shots if a club is selected
+      if (!shotData.chosenClub) {
+        console.warn('Please select a club before recording shots');
+        return;
+      }
       $element.append(createLabelElement(shotData));
-      $(window).trigger('DispersionData:add',shotData);
+      $(window).trigger('DispersionData:add', shotData);
     }
 
     var handleClick = function (e) {
